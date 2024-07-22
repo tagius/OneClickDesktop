@@ -19,7 +19,7 @@
 #您可以在这里修改Guacamole源码下载链接。
 #访问https://guacamole.apache.org/releases/获取最新源码。
 
-GUACAMOLE_DOWNLOAD_LINK="https://apache.org/dyn/closer.lua/guacamole/1.5.5/source/guacamole-server-1.5.5.tar.gz?action=download"
+GUACAMOLE_DOWNLOAD_LINK="https://dlcdn.apache.org/guacamole/1.5.5/source/guacamole-server-1.5.5.tar.gz"
 GUACAMOLE_VERSION="1.5.5"
 
 # UPDATE:你可以在这里更改对RHEL8的依赖的URL
