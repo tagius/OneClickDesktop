@@ -1,9 +1,9 @@
 #!/bin/bash
 ###########################################################################################
 #    One-click Desktop & Browser Access Setup Script v0.2.0                               #
-#    Written by shc (https://qing.su)                                                     #
-#    Github link: https://github.com/Har-Kuun/OneClickDesktop                             #
-#    Contact me: https://t.me/hsun94   E-mail: hi@qing.su                                 #
+#    Written by shc (https://qing.su) and York (https://144500.xyz)                                                     #
+#    Github link: https://github.com/York-Labs/OneClickDesktop                             #
+#    Follow me: https://t.me/york_hub   E-mail: york@144500.xyz                                 #
 #                                                                                         #
 #    This script is distributed in the hope that it will be                               #
 #    useful, but ABSOLUTELY WITHOUT ANY WARRANTY.                                         #
@@ -22,7 +22,14 @@
 GUACAMOLE_DOWNLOAD_LINK="https://apache.org/dyn/closer.lua/guacamole/1.5.5/source/guacamole-server-1.5.5.tar.gz?action=download"
 GUACAMOLE_VERSION="1.5.5"
 
-#此脚本仅支持Ubuntu 18/20, Debian 10, 以及CentOS 7/8.
+# UPDATE:你可以在这里更改对RHEL8的依赖的URL
+LIBUV_URL="http://repo.almalinux.org/almalinux/8/AppStream/x86_64/os/Packages/libuv-1.41.1-2.el8_10.x86_64.rpm"
+SDL2_URL="http://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/source/tree/Packages/s/SDL2-2.30.3-1.fc41.src.rpm"
+
+# UPDATE:如果您对脚本做了更改，并公开发布，请记得更改这里的链接，方便后续用户反馈Bug
+PROJECT_URL="https://github.com/York-Labs/OneClickDesktop"
+
+#此脚本仅支持Ubuntu 18/20/22/24, Debian 10/11/12, CentOS 7/8，以及AlmaLinux，Rocky Linux.
 #如果您试图再其他版本的操作系统中安装，可以在下面禁用OS检查开关。
 #请注意，在其他操作系统上安装此脚本可能会导致不可预料的错误。  请在安装前做好备份。
 
@@ -39,6 +46,8 @@ OS_CHECK_ENABLED=ON
 exec > >(tee -i OneClickDesktop.log)
 exec 2>&1
 
+# UPDATE：检查OS类型及版本
+# UPDATE：由于Ubuntu过于商业化，我会考虑剔除对Ubuntu的支持。
 function check_OS
 {
 	if [ -f /etc/lsb-release ] ; then
@@ -48,11 +57,16 @@ function check_OS
 		else
 			cat /etc/lsb-release | grep "DISTRIB_RELEASE=20." >/dev/null
 			if [ $? = 0 ] ; then
-				OS=UBUNTU20
+				OS=DEBIAN # 反正Ubuntu是Debian分支，直接统一处理
 			else
-				say "很抱歉，此脚本仅支持Ubuntu 18/20, Debian 10, 以及CentOS 7/8操作系统。" red
-				echo 
-				exit 1
+				cat /etc/lsb-release | grep "DISTRIB_RELEASE=24." >/dev/null
+				if [ $? = 0 ] ; then
+					OS=DEBIAN
+				else
+					say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
+					echo 
+					exit 1
+				fi
 			fi
 		fi
 	elif [ -f /etc/debian_version ] ; then
@@ -60,14 +74,24 @@ function check_OS
 		if [ $? = 0 ] ; then
 			OS=DEBIAN10
 		else
-			say "很抱歉，此脚本仅支持Ubuntu 18/20, Debian 10, 以及CentOS 7/8操作系统。" red
-			echo 
-			exit 1
+			cat /etc/debian_version | grep "^11." >/dev/null
+			if [ $? = 0 ] ; then
+				OS=DEBIAN
+			else
+				cat /etc/debian_version | grep "^12." >/dev/null
+				if [ $? = 0 ] ; then
+					OS=DEBIAN
+				else
+					say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
+					echo 
+					exit 1
+				fi
+			fi
 		fi
 	elif [ -f /etc/redhat-release ] ; then
 		cat /etc/redhat-release | grep " 8." >/dev/null
 		if [ $? = 0 ] ; then
-			OS=CENTOS8
+			OS=RHEL8
 			say @B"CentOS 8的支持目前还处于测试阶段，如果有bug欢迎提出。" yellow
 			say @B"如果安装好后无法访问您的服务器桌面，请考虑禁用firewalld或者selinux." yellow
 			echo 
@@ -79,13 +103,26 @@ function check_OS
 				say @B"如果安装好后无法访问您的服务器桌面，请考虑禁用firewalld或者selinux." yellow
 				echo 
 			else
-				say "很抱歉，此脚本仅支持Ubuntu 18/20, Debian 10, 以及CentOS 7/8操作系统。" red
-				echo
-				exit 1
+				cat /etc/redhat-release | grep "AlmaLinux" >/dev/null
+				if [ $? = 0 ] ; then
+					OS=RHEL8
+                                        say @B"CentOS 8的支持目前还处于测试阶段，如果有bug欢迎提出。" yellow
+			                say @B"如果安装好后无法访问您的服务器桌面，请考虑禁用firewalld或者selinux." yellow
+			                echo
+				else
+					cat /etc/redhat-release | grep "Rocky Linux" >/dev/null
+					if [ $? = 0 ] ; then
+						OS=RHEL8
+					else
+						say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
+						echo
+						exit 1
+					fi
+				fi
 			fi
 		fi
 	else
-		say "很抱歉，此脚本仅支持Ubuntu 18/20, Debian 10, 以及CentOS 7/8操作系统。" red
+		say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
 		echo 
 		exit 1
 	fi
@@ -93,7 +130,7 @@ function check_OS
 
 function say
 {
-#This function is a colored version of the built-in "echo."
+#This function is a colored version of the built-in "echo".
 #https://github.com/Har-Kuun/useful-shell-functions/blob/master/colored-echo.sh
 	echo_content=$1
 	case $2 in
@@ -146,7 +183,7 @@ function get_user_options
 	read guacamole_password_prehash
 	read guacamole_password_md5 <<< $(echo -n $guacamole_password_prehash | md5sum | awk '{print $1}')
 	echo 
-	if [ "x$OS" != "xCENTOS8" ] && [ "x$OS" != "xCENTOS7" ] ; then
+	if [ "x$OS" != "xRHEL8" ] && [ "x$OS" != "xCENTOS7" ] ; then
 		say @B"您想让Guacamole通过RDP还是VNC连接Linux桌面？" yellow
 		say @B"RDP请输入1, VNC请输入2. 如果您不清楚这是什么，请输入1." yellow
 		read choice_rdpvnc
@@ -193,6 +230,8 @@ function get_user_options
 		echo "通过浏览器方式访问远程桌面时，您将无需使用此VNC密码。"
 		sleep 1
 	fi
+        # 从这里开始，是配置反代的部分
+	# 将在下一个版本使用caddy来反代
 	echo 
 	say @B"请问您是否想要设置Nginx反代？" yellow
 	say @B"请注意，如果您想在本地电脑和服务器之间复制粘贴文本，您必须启用反代并设置SSL. 不过，您也可以暂时先不设置反代，以后再手动设置。" yellow
@@ -247,7 +286,7 @@ function install_guacamole_ubuntu_debian
 		echo 
 		say "依赖环境缺失。" red
 		echo "请核查日志，安装必要的依赖环境，并再次运行此脚本。"
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		echo 
 		exit 1
@@ -269,7 +308,7 @@ function install_guacamole_ubuntu_debian
 	else 
 		say "Guacamole服务器安装失败。" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		exit 1
 	fi
@@ -280,12 +319,14 @@ function install_guacamole_centos
 	echo 
 	say @B"安装依赖环境..." yellow
 	echo 
-	if [ "$OS" = "CENTOS8" ] ; then
+        # UPDATE：下面的链接都更新了，基于Alma源，放心食用
+	# 我估计作者也没料到有一天centos源会关闭，哈哈。
+	if [ "$OS" = "RHEL8" ] ; then
 		dnf -y update
 		dnf -y group install "Development Tools"
 		dnf -y install --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm
-		dnf -y install http://rpmfind.net/linux/epel/7/x86_64/Packages/s/SDL2-2.0.10-1.el7.x86_64.rpm
-		dnf -y install http://mirror.centos.org/centos/8/Devel/x86_64/os/Packages/libuv-devel-1.23.1-1.el8.x86_64.rpm
+		dnf -y install ${SDL2_URL}
+		dnf -y install ${LIBUV_URL}
 		dnf -y --enablerepo=PowerTools install perl expect cairo cairo-devel libpng-devel libtool uuid libjpeg-devel libjpeg-turbo-devel freerdp freerdp-devel pango-devel libssh2-devel libvncserver-devel pulseaudio-libs-devel openssl-devel libwebp-devel libwebsockets-devel libvorbis-devel ffmpeg-devel uuid-devel ffmpeg ffmpeg-devel mingw64-filesystem
 		yum -y groupinstall Fonts
 		dnf -y install java-11-openjdk-devel
@@ -313,7 +354,7 @@ function install_guacamole_centos
 		echo 
 		say "依赖环境缺失。" red
 		echo "请核查日志，安装必要的依赖环境，并再次运行此脚本。"
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		echo 
 		exit 1
@@ -334,7 +375,7 @@ function install_guacamole_centos
 	else 
 		say "Guacamole服务器安装失败。" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		exit 1
 	fi
@@ -381,7 +422,7 @@ function install_guacamole_web
 	echo "开始安装Guacamole Web应用..."
 	cd $CurrentDir
 	wget https://downloads.apache.org/guacamole/$GUACAMOLE_VERSION/binary/guacamole-$GUACAMOLE_VERSION.war
-	if [ "$OS" = "CENTOS7" ] || [ "$OS" = "CENTOS8" ] ; then
+	if [ "$OS" = "CENTOS7" ] || [ "$OS" = "RHEL8" ] ; then
 		mv guacamole-$GUACAMOLE_VERSION.war /etc/tomcat9/webapps/guacamole.war
 	else
 		mv guacamole-$GUACAMOLE_VERSION.war /var/lib/tomcat9/webapps/guacamole.war
@@ -582,7 +623,7 @@ END
 	else
 		say "VNC安装失败！" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		exit 1
 	fi
@@ -592,7 +633,7 @@ function install_rdp
 {
 	echo 
 	echo "开始安装桌面环境，Firefox浏览器，以及XRDP服务器..."
-	if [ "$OS" = "UBUNTU18" ] || [ "$OS" = "UBUNTU20" ] ; then
+	if [ "$OS" = "UBUNTU18" ] || [ "$OS" = "DEBIAN" ] ; then
 		say @B"如果系统提示您配置LightDM，您可以直接按回车键。" yellow
 		echo 
 		echo "请按回车键继续。"
@@ -601,7 +642,7 @@ function install_rdp
 	fi
 	if [ "$OS" = "DEBIAN10" ] ; then
 		apt-get install xfce4 xfce4-goodies firefox-esr xrdp -y
-	elif [ "$OS" = "CENTOS8" ] || [ "$OS" = "CENTOS7" ] ; then
+	elif [ "$OS" = "RHEL8" ] || [ "$OS" = "CENTOS7" ] ; then
 		yum -y groupinstall "Server with GUI"
 		yum -y install firefox
 		compile_xrdp_centos
@@ -614,7 +655,7 @@ function install_rdp
 	echo "开始配置XRDP服务器..."
 	sleep 2
 	echo 
-	if [ "$OS" != "CENTOS7" ] && [ "$OS" != "CENTOS8" ] ; then
+	if [ "$OS" != "CENTOS7" ] && [ "$OS" != "RHEL8" ] ; then
 		mv /etc/xrdp/startwm.sh /etc/xrdp/startwm.sh.backup
 		cat > /etc/xrdp/startwm.sh <<END
 #!/bin/sh
@@ -691,7 +732,7 @@ END
 	else
 		say "XRDP安装失败!" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		exit 1
 	fi
@@ -720,7 +761,7 @@ function compile_xrdp_centos
 		echo 
 		say "依赖环境缺失。" red
 		echo "请核查日志，安装必要的依赖环境，并再次运行此脚本。"
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		echo 
 		exit 1
@@ -737,7 +778,7 @@ function compile_xrdp_centos
 	else 
 		say "XRDP安装失败!" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在https://github.com/Har-Kuun/OneClickDesktop/issues这里提交错误报告，以便我修复脚本。"
+		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
 		echo "谢谢！"
 		exit 1
 	fi
@@ -761,7 +802,7 @@ function install_reverse_proxy
 	echo 
 	say @B"安装Nginx反代..." yellow
 	sleep 2
-	if [ "$OS" = "CENTOS8" ] ; then
+	if [ "$OS" = "RHEL8" ] ; then
 		dnf -y install nginx certbot python3-certbot-nginx
 		systemctl enable nginx
 		systemctl start nginx
@@ -821,7 +862,7 @@ function main
 	fi
 	echo "此脚本将在本服务器上安装一个桌面环境。您可以随时随地在浏览器上使用这个桌面环境。"
 	echo 
-	if [ "$OS" = "CENTOS7" ] || [ "$OS" = "CENTOS8" ] ; then
+	if [ "$OS" = "CENTOS7" ] || [ "$OS" = "RHEL8" ] ; then
 		say @B"此桌面环境需要至少1.5 GB内存。" yellow
 	else
 		say @B"此桌面环境需要至少1 GB内存。" yellow
@@ -832,13 +873,13 @@ function main
 	if [ "x$confirm_installation" = "xY" ] || [ "x$confirm_installation" = "xy" ] ; then
 		determine_system_variables
 		get_user_options
-		if [ "$OS" = "CENTOS7" ] || [ "$OS" = "CENTOS8" ] ; then
+		if [ "$OS" = "CENTOS7" ] || [ "$OS" = "RHEL8" ] ; then
 			install_guacamole_centos
 		else
 			install_guacamole_ubuntu_debian
 		fi
 		install_guacamole_web
-		if [ "$OS" = "CENTOS7" ] || [ "$OS" = "CENTOS8" ] ; then
+		if [ "$OS" = "CENTOS7" ] || [ "$OS" = "RHEL8" ] ; then
 			configure_guacamole_centos
 		else
 			configure_guacamole_ubuntu_debian
@@ -860,7 +901,7 @@ function main
 		fi
 	fi
 	echo 
-	echo "感谢您的使用！此脚本作者为https://qing.su"
+	echo "感谢您的使用！此脚本作者为https://qing.su,现维护者 https://github.com/york618"
 	echo "祝您生活愉快！"
 }
 
