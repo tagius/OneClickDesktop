@@ -22,10 +22,13 @@
 GUACAMOLE_DOWNLOAD_LINK="https://dlcdn.apache.org/guacamole/1.5.5/source/guacamole-server-1.5.5.tar.gz"
 GUACAMOLE_VERSION="1.5.5"
 
-# UPDATE:你可以在这里更改对RHEL8的依赖的URL
+# UPDATE:你可以在这里更改对RHEL8的特殊依赖的URL
 LIBUV_URL="http://repo.almalinux.org/almalinux/8/AppStream/x86_64/os/Packages/libuv-1.41.1-2.el8_10.x86_64.rpm"
 SDL2_URL="http://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/source/tree/Packages/s/SDL2-2.30.3-1.fc41.src.rpm"
 
+# UPDATE:你可以在这里更改Apache Tomcat的URL
+TOMCAT_URL="https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.91/bin/apache-tomcat-9.0.91.tar.gz"
+TOMCAT_FILENAME="apache-tomcat-9.0.91"
 # UPDATE:如果您对脚本做了更改，并公开发布，请记得更改这里的链接，方便后续用户反馈Bug
 PROJECT_URL="https://github.com/York-Labs/OneClickDesktop"
 
@@ -383,8 +386,8 @@ function install_guacamole_centos
 
 function install_tomcat9_centos
 {
-	curl -s https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.38/bin/apache-tomcat-9.0.38.tar.gz | tar -xz
-	mv apache-tomcat-9.0.38 /etc/tomcat9
+	curl -s $TOMCAT_URL | tar -xz
+	mv $TOMCAT_FILENAME /etc/tomcat9
 	echo "export CATALINA_HOME="/etc/tomcat9"" >> ~/.bashrc
 	source ~/.bashrc
 	useradd -r tomcat
