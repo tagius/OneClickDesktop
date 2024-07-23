@@ -915,7 +915,7 @@ function main
 		else
 			install_vnc
 		fi
-		if [ "x$install_nginx" != "xn" ] && [ "x$install_nginx" != "xN" ] ; then
+		if [ "x$install_caddy" != "xn" ] && [ "x$install_caddy" != "xN" ] ; then
 			install_reverse_proxy
 		else
 			say @B"开始使用您的远程桌面，请在浏览器中访问 http://$(curl -s icanhazip.com):8080/guacamole!" green
