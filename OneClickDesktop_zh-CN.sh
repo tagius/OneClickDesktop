@@ -231,13 +231,13 @@ function get_user_options
 		sleep 1
 	fi
         # 从这里开始，是配置反代的部分
-	# 将在下一个版本使用caddy来反代
+	# 相比原版本，将使用caddy来反代
 	echo 
-	say @B"请问您是否想要设置Nginx反代？" yellow
+	say @B"请问您是否想要设置Caddy反代？" yellow
 	say @B"请注意，如果您想在本地电脑和服务器之间复制粘贴文本，您必须启用反代并设置SSL. 不过，您也可以暂时先不设置反代，以后再手动设置。" yellow
 	echo "请输入 [Y/n]:"
-	read install_nginx
-	if [ "x$install_nginx" != "xn" ] && [ "x$install_nginx" != "xN" ] ; then
+	read install_caddy
+	if [ "x$install_caddy" != "xn" ] && [ "x$install_caddy" != "xN" ] ; then
 		echo 
 		say @B"请输入您的域名（比如desktop.qing.su）:" yellow
 		read guacamole_hostname
@@ -253,7 +253,7 @@ function get_user_options
 			read le_email
 		fi
 	else
-		say @B"好的，将跳过Nginx安装。" yellow
+		say @B"好的，将跳过Caddy安装。" yellow
 	fi
 	echo 
 	say @B"开始安装桌面环境，请稍后。" green
@@ -800,55 +800,81 @@ function display_license
 function install_reverse_proxy
 {
 	echo 
-	say @B"安装Nginx反代..." yellow
+	say @B"安装Caddy反代..." yellow
 	sleep 2
 	if [ "$OS" = "RHEL8" ] ; then
-		dnf -y install nginx certbot python3-certbot-nginx
-		systemctl enable nginx
-		systemctl start nginx
+		dnf install -y 'dnf-command(copr)'
+		dnf copr enable @caddy/caddy -y
+		dnf install caddy -y
 	elif [ "$OS" = "CENTOS7" ] ; then
-		yum -y install nginx certbot python-certbot-nginx
-		systemctl enable nginx
-		systemctl start nginx
+		yum install -y yum-plugin-copr
+		yum copr enable @caddy/caddy -y
+		yum install caddy -y
 	else
-		apt-get install nginx certbot python3-certbot-nginx -y
+		sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+                curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+		curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
 	fi
-		say @B"Nginx安装成功！" green
-	cat > /etc/nginx/conf.d/guacamole.conf <<END
-server {
-        listen 80;
-        listen [::]:80;
-        server_name $guacamole_hostname;
+                systemctl stop caddy
+		say @B"Caddy安装成功！" green
+	
 
-        access_log  /var/log/nginx/guac_access.log;
-        error_log  /var/log/nginx/guac_error.log;
 
-        location / {
-                    proxy_pass http://127.0.0.1:8080/guacamole/;
-                    proxy_buffering off;
-                    proxy_http_version 1.1;
-                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                    proxy_set_header Upgrade \$http_upgrade;
-                    proxy_set_header Connection \$http_connection;
-                    proxy_cookie_path /guacamole/ /;
-        }
 
+$guacamole_hostname {
+    reverse_proxy localhost:8080/guacamole/
+    
 }
+
 END
 	systemctl reload nginx
 	if [ "x$confirm_letsencrypt" = "xY" ] || [ "x$confirm_letsencrypt" = "xy" ] ; then
-		certbot --nginx --agree-tos --redirect --hsts --staple-ocsp --email $le_email -d $guacamole_hostname
+		cat >> /etc/caddy/Caddyfile <<END
+{
+    log caddy_log {
+        output {
+	       file /etc/caddy/caddy.log
+		}
+  }
+
+	# TLS options
+    email $le_email
+	
+}
+$guacamole_hostname {
+    reverse_proxy localhost:8080/guacamole
+    
+}
+END
+
 		echo 
-		if [ -f /etc/letsencrypt/live/$guacamole_hostname/fullchain.pem ] ; then
+		if [ -f /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$guacamole_hostname/$guacamole_hostname.crt ] ; then
 			say @B"恭喜！Let's Encrypt SSL证书安装成功！" green
 			say @B"开始使用您的远程桌面，请在浏览器中访问 https://${guacamole_hostname}!" green
 		else
 			say "Let's Encrypt SSL证书安装失败。" red
-			say @B"您可以请手动执行 \"certbot --nginx --agree-tos --redirect --hsts --staple-ocsp --email $le_email -d $guacamole_hostname\"." yellow
+			say @B"请查看caddy 日志，位于/etc/caddy/caddy.log"." yellow
 			say @B"开始使用您的远程桌面，请在浏览器中访问 http://${guacamole_hostname}!" green
 		fi
 	else
-		say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动执行 \"certbot --nginx --agree-tos --redirect --hsts --staple-ocsp -d $guacamole_hostname\"." yellow
+        cat >> /etc/caddy/Caddyfile <<END
+{
+    log caddy_log {
+        output {
+	       file /etc/caddy/caddy.log
+		}
+  }
+
+	# TLS options
+    email $le_email
+	auto_https off
+}
+$guacamole_hostname {
+    reverse_proxy localhost:8080/guacamole
+    
+}
+END
+		say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动更改Caddyfile，位于/etc/caddy/Caddyfile"." yellow
 		say @B"开始使用您的远程桌面，请在浏览器中访问 http://${guacamole_hostname}!" green
 	fi
 	say @B"您的Guacamole用户名是$guacamole_username，您的Guacamole密码是$guacamole_password_prehash." green
