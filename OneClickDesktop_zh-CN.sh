@@ -509,6 +509,15 @@ END
 </user-mapping>
 END
 	fi
+        cat > /etc/hosts << END
+127.0.0.1       localhost
+
+# The following lines are desirable for IPv6 capable hosts
+
+# ::1     localhost ip6-localhost ip6-loopback
+#ff02::1 ip6-allnodes
+#ff02::2 ip6-allrouters
+END
 	systemctl restart tomcat9 guacd
 	say @B"Guacamole配置成功！" green
 	echo 
@@ -519,7 +528,7 @@ function configure_guacamole_centos
 	echo 
 	mkdir /etc/guacamole/
 	cat > /etc/guacamole/guacamole.properties <<END
-guacd-hostname: localhost
+guacd-hostname: 127.0.0.1
 guacd-port: 4822
 auth-provider: net.sourceforge.guacamole.net.basic.BasicFileAuthenticationProvider
 basic-user-mapping: /etc/guacamole/user-mapping.xml
@@ -559,6 +568,15 @@ END
 </user-mapping>
 END
 	fi
+        cat > /etc/hosts << END
+127.0.0.1       localhost
+
+# The following lines are desirable for IPv6 capable hosts
+
+# ::1     localhost ip6-localhost ip6-loopback
+#ff02::1 ip6-allnodes
+#ff02::2 ip6-allrouters
+END
 	systemctl restart tomcat9 guacd
 	say @B"Guacamole配置成功！" green
 	echo 
@@ -832,8 +850,8 @@ function install_reverse_proxy
      email $le_email
 }
 $guacamole_hostname {
-     reverse_proxy localhost:8080/guacamole
-     
+     reverse_proxy http://localhost:8080
+     rewrite / /guacamole
 }
 END
 	   systemctl start caddy
@@ -855,8 +873,8 @@ END
      auto_https off
 }
 $guacamole_hostname {
-    reverse_proxy localhost:8080/guacamole
-     
+    reverse_proxy http://localhost:8080
+    rewrite / /guacamole
 }
 END
                 say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动更改Caddyfile，位于/etc/caddy/Caddyfile" yellow
