@@ -829,11 +829,7 @@ function install_reverse_proxy
 	if [ "x$confirm_letsencrypt" = "xY" ] || [ "x$confirm_letsencrypt" = "xy" ] ; then
 	   cat > /etc/caddy/Caddyfile << END
 {
-     log caddy_log {
-         output {
- 	       file /etc/caddy/caddy.log
- 		}
-   }
+     
  	# TLS options
      email $le_email
  }
@@ -855,11 +851,7 @@ END
         else
  		cat > /etc/caddy/Caddyfile << END
  {
-     log caddy_log {
-         output {
- 	       file /etc/caddy/caddy.log
- 		}
-   }
+     
  	# TLS options
      email $le_email
  	auto_https off
