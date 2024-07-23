@@ -282,6 +282,7 @@ function install_guacamole_ubuntu_debian
 	say @B"安装依赖环境..." yellow
 	echo 
 	apt-get update && apt-get upgrade -y
+        apt-get install build-essential -y
 	apt-get install wget curl sudo zip unzip tar perl expect build-essential libcairo2-dev libpng-dev libtool-bin libossp-uuid-dev libvncserver-dev freerdp2-dev libssh2-1-dev libtelnet-dev libwebsockets-dev libpulse-dev libvorbis-dev libwebp-dev libssl-dev libpango1.0-dev libswscale-dev libavcodec-dev libavutil-dev libavformat-dev tomcat9 tomcat9-admin tomcat9-common tomcat9-user japan* chinese* korean* fonts-arphic-ukai fonts-arphic-uming fonts-ipafont-mincho fonts-ipafont-gothic fonts-unfonts-core -y
 	if [ "$OS" = "DEBIAN10" ] ; then
 		apt-get install libjpeg62-turbo-dev -y
@@ -808,9 +809,10 @@ function install_reverse_proxy
 		yum copr enable @caddy/caddy -y
 		yum install caddy -y
 	else
-		sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+		sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
                 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 		curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+                apt-get install -y caddy
 	fi
                 systemctl stop caddy
 		say @B"Caddy安装成功！" green
