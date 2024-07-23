@@ -361,7 +361,7 @@ function install_guacamole_centos
 		yum -y groupinstall Fonts
 		yum -y install java-11-openjdk-devel
 	fi
-	install_tomcat9_centos
+	install_tomcat9
 	wget $GUACAMOLE_DOWNLOAD_LINK
 	tar zxf guacamole-server-${GUACAMOLE_VERSION}.tar.gz
 	rm -f guacamole-server-${GUACAMOLE_VERSION}.tar.gz
