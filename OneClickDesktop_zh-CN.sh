@@ -246,7 +246,7 @@ function get_user_options
 		echo "是否为域名${guacamole_hostname}申请免费的Let's Encrypt SSL证书？ [Y/N]"
 		say @B"设置证书之前，您必须将您的域名指向本服务器的IP地址！" yellow
 		echo "如果您确认了您的域名已经指向了本服务器的IP地址，请输入Y开始证书申请。"
-		read confirm_letsencrypt
+		read confirm_le
 		echo 
 		if [ "x$confirm_letsencrypt" = "xY" ] || [ "x$confirm_letsencrypt" = "xy" ] ; then
 			echo "请输入一个邮箱地址:"
@@ -817,34 +817,53 @@ function install_reverse_proxy
 	fi
                 systemctl stop caddy
 		say @B"Caddy安装成功！" green
+		if [ "x$confirm_letsencrypt" = "xY" ] || [ "x$confirm_letsencrypt" = "xy" ] ; then
+		cat >> /etc/caddy/Caddyfile <<END
+ {
+     log caddy_log {
+         output {
+ 	       file /etc/caddy/caddy.log
+ 		}
+   }
+ 	# TLS options
+     email $le_email
+ 	
+ }
+ $guacamole_hostname {
+     reverse_proxy localhost:8080/guacamole
+     
+ }
+
+ END
+ 
 		echo 
 		if [ -f /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$guacamole_hostname/$guacamole_hostname.crt ] ; then
 			say @B"恭喜！Let's Encrypt SSL证书安装成功！" green
 			say @B"开始使用您的远程桌面，请在浏览器中访问 https://${guacamole_hostname}!" green
 		else
 			say "Let's Encrypt SSL证书安装失败。" red
-			say @B"请查看caddy 日志，位于/etc/caddy/caddy.log"." yellow
+			say @B"请查看caddy 日志，位于/etc/caddy/caddy.log" yellow
 			say @B"开始使用您的远程桌面，请在浏览器中访问 http://${guacamole_hostname}!" green
 		fi
 	else
-        cat >> /etc/caddy/Caddyfile <<END
-{
-    log caddy_log {
-        output {
-	       file /etc/caddy/caddy.log
-		}
-  }
-
-	# TLS options
-    email $le_email
-	auto_https off
-}
-$guacamole_hostname {
-    reverse_proxy localhost:8080/guacamole
-    
-}
-END
-		say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动更改Caddyfile，位于/etc/caddy/Caddyfile"." yellow
+		cat >> /etc/caddy/Caddyfile <<END
+ {
+     log caddy_log {
+         output {
+ 	       file /etc/caddy/caddy.log
+ 		}
+   }
+ 	# TLS options
+     email $le_email
+     auto_https off
+ }
+ $guacamole_hostname {
+     reverse_proxy localhost:8080/guacamole
+     
+ }
+ END
+ 		say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动更改Caddyfile，位于/etc/caddy/Caddyfile"." yellow
+                say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动执行 \"certbot --nginx --agree-tos --redirect --hsts --staple-ocsp -d $guacamole_hostname\"." yellow
 		say @B"开始使用您的远程桌面，请在浏览器中访问 http://${guacamole_hostname}!" green
 	fi
 	say @B"您的Guacamole用户名是$guacamole_username，您的Guacamole密码是$guacamole_password_prehash." green
