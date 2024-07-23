@@ -818,7 +818,7 @@ function install_reverse_proxy
                 systemctl stop caddy
 		say @B"Caddy安装成功！" green
 		if [ "x$confirm_letsencrypt" = "xY" ] || [ "x$confirm_letsencrypt" = "xy" ] ; then
-		cat > /etc/caddy/Caddyfile <<END
+		    cat > /etc/caddy/Caddyfile <<END
  {
      log caddy_log {
          output {
@@ -836,10 +836,10 @@ function install_reverse_proxy
  }
  END
  
-		systemctl start caddy
-                echo 
-		if [ -f /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$guacamole_hostname/$guacamole_hostname.crt ] ; then
-			say @B"恭喜！Let's Encrypt SSL证书安装成功！" green
+		    systemctl start caddy
+                    echo 
+		    if [ -f /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$guacamole_hostname/$guacamole_hostname.crt ] ; then
+	                say @B"恭喜！Let's Encrypt SSL证书安装成功！" green
 			say @B"开始使用您的远程桌面，请在浏览器中访问 https://${guacamole_hostname}!" green
 		else
 			say "Let's Encrypt SSL证书安装失败。" red
