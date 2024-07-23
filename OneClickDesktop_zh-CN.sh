@@ -860,7 +860,7 @@ END
      
  }
 END
-                say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动更改Caddyfile，位于/etc/caddy/Caddyfile"." yellow
+                say @B"Let's Encrypt证书未安装，如果您之后需要安装Let's Encrypt证书，请手动更改Caddyfile，位于/etc/caddy/Caddyfile" yellow
 		say @B"开始使用您的远程桌面，请在浏览器中访问 http://${guacamole_hostname}!" green
 	fi
 	say @B"您的Guacamole用户名是$guacamole_username，您的Guacamole密码是$guacamole_password_prehash." green
