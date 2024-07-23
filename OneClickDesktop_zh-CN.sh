@@ -854,7 +854,7 @@ END
      
  	# TLS options
      email $le_email
- 	auto_https off
+     auto_https off
  }
  $guacamole_hostname {
      reverse_proxy localhost:8080/guacamole
