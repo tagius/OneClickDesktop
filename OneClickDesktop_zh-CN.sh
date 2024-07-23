@@ -29,6 +29,7 @@ SDL2_URL="http://download.fedoraproject.org/pub/fedora/linux/development/rawhide
 # UPDATE:你可以在这里更改Apache Tomcat的URL
 TOMCAT_URL="https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.91/bin/apache-tomcat-9.0.91.tar.gz"
 TOMCAT_FILENAME="apache-tomcat-9.0.91"
+
 # UPDATE:如果您对脚本做了更改，并公开发布，请记得更改这里的链接，方便后续用户反馈Bug
 PROJECT_URL="https://github.com/York-Labs/OneClickDesktop"
 
@@ -48,6 +49,15 @@ OS_CHECK_ENABLED=ON
 
 exec > >(tee -i OneClickDesktop.log)
 exec 2>&1
+
+function show_feedback
+{
+        echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
+	echo "谢谢"
+        echo
+	exit 1
+}
+
 
 # UPDATE：检查OS类型及版本
 # UPDATE：由于Ubuntu过于商业化，我会考虑剔除对Ubuntu的支持。
@@ -109,13 +119,16 @@ function check_OS
 				cat /etc/redhat-release | grep "AlmaLinux" >/dev/null
 				if [ $? = 0 ] ; then
 					OS=RHEL8
-                                        say @B"CentOS 8的支持目前还处于测试阶段，如果有bug欢迎提出。" yellow
+                                        say @B"AlmaLinux的支持目前还处于测试阶段，如果有bug欢迎提出。" yellow
 			                say @B"如果安装好后无法访问您的服务器桌面，请考虑禁用firewalld或者selinux." yellow
 			                echo
 				else
 					cat /etc/redhat-release | grep "Rocky Linux" >/dev/null
 					if [ $? = 0 ] ; then
 						OS=RHEL8
+                                                say @B"Rocky Linux的支持目前还处于测试阶段，如果有bug欢迎提出。" yellow
+						say @B"如果安装好后无法访问您的服务器桌面，请考虑禁用firewalld或者selinux." yellow
+						echo
 					else
 						say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
 						echo
@@ -289,10 +302,7 @@ function install_guacamole_ubuntu_debian
 		echo 
 		say "依赖环境缺失。" red
 		echo "请核查日志，安装必要的依赖环境，并再次运行此脚本。"
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		echo 
-		exit 1
+		show_feedback
 	fi
 	sleep 2
 	make
@@ -311,9 +321,7 @@ function install_guacamole_ubuntu_debian
 	else 
 		say "Guacamole服务器安装失败。" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		exit 1
+		show_feedback
 	fi
 }
 
@@ -357,10 +365,7 @@ function install_guacamole_centos
 		echo 
 		say "依赖环境缺失。" red
 		echo "请核查日志，安装必要的依赖环境，并再次运行此脚本。"
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		echo 
-		exit 1
+		show_feedback
 	fi
 	sleep 2
 	make
@@ -378,9 +383,7 @@ function install_guacamole_centos
 	else 
 		say "Guacamole服务器安装失败。" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		exit 1
+		show_feedback
 	fi
 }
 
@@ -626,9 +629,7 @@ END
 	else
 		say "VNC安装失败！" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		exit 1
+		show_feedback
 	fi
 }
 
@@ -735,9 +736,7 @@ END
 	else
 		say "XRDP安装失败!" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		exit 1
+		show_feedback
 	fi
 }
 
@@ -764,10 +763,7 @@ function compile_xrdp_centos
 		echo 
 		say "依赖环境缺失。" red
 		echo "请核查日志，安装必要的依赖环境，并再次运行此脚本。"
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		echo 
-		exit 1
+		show_feedback
 	fi
 	sleep 2
 	make
@@ -781,9 +777,7 @@ function compile_xrdp_centos
 	else 
 		say "XRDP安装失败!" red
 		say @B"请检查上面的日志。" yellow
-		echo "欢迎您在${PROJECT_URL}/issues这里提交错误报告，以便我修复脚本。"
-		echo "谢谢！"
-		exit 1
+		show_feedback
 	fi
 }
 
