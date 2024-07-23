@@ -66,15 +66,15 @@ function check_OS
 	if [ -f /etc/lsb-release ] ; then
 		cat /etc/lsb-release | grep "DISTRIB_RELEASE=18." >/dev/null
 		if [ $? = 0 ] ; then
-			OS=UBUNTU18
+			OS=UBUNTU
 		else
 			cat /etc/lsb-release | grep "DISTRIB_RELEASE=20." >/dev/null
 			if [ $? = 0 ] ; then
-				OS=DEBIAN # 反正Ubuntu是Debian分支，直接统一处理
+				OS=UBUNTU # Ubuntu和Debian依赖不同。
 			else
 				cat /etc/lsb-release | grep "DISTRIB_RELEASE=24." >/dev/null
 				if [ $? = 0 ] ; then
-					OS=DEBIAN
+					OS=UBUNTU
 				else
 					say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
 					echo 
@@ -89,11 +89,11 @@ function check_OS
 		else
 			cat /etc/debian_version | grep "^11." >/dev/null
 			if [ $? = 0 ] ; then
-				OS=DEBIAN
+				OS=DEBIAN10
 			else
 				cat /etc/debian_version | grep "^12." >/dev/null
 				if [ $? = 0 ] ; then
-					OS=DEBIAN
+					OS=DEBIAN10
 				else
 					say "很抱歉，此脚本仅支持Ubuntu 18/20/24, Debian 10/11/12, 以及CentOS 7/8, AlmaLinux 和 Rocky Linux操作系统。" red
 					echo 
@@ -283,12 +283,22 @@ function install_guacamole_ubuntu_debian
 	echo 
 	apt-get update && apt-get upgrade -y
         apt-get install build-essential -y
-	apt-get install wget curl sudo zip unzip tar perl expect build-essential libcairo2-dev libpng-dev libtool-bin libossp-uuid-dev libvncserver-dev freerdp2-dev libssh2-1-dev libtelnet-dev libwebsockets-dev libpulse-dev libvorbis-dev libwebp-dev libssl-dev libpango1.0-dev libswscale-dev libavcodec-dev libavutil-dev libavformat-dev tomcat9 tomcat9-admin tomcat9-common tomcat9-user japan* chinese* korean* fonts-arphic-ukai fonts-arphic-uming fonts-ipafont-mincho fonts-ipafont-gothic fonts-unfonts-core -y
+	apt-get install perl expect build-essential -y
+        apt-get install libcairo2-dev libpng-dev libtool-bin -y 
+	apt-get install uuid-dev  -y
+        # 以下是针对协议的依赖
+        apt-get install libvncserver-dev freerdp2-dev libssh2-1-dev libtelnet-dev libwebsockets-dev libpulse-dev libvorbis-dev libwebp-dev libssl-dev libpango1.0-dev libswscale-dev libavcodec-dev libavutil-dev libavformat-dev 
+	# 字体依赖
+        apt-get install fonts-arphic-ukai fonts-arphic-uming fonts-ipafont-mincho fonts-ipafont-gothic fonts-unfonts-core -y
 	if [ "$OS" = "DEBIAN10" ] ; then
 		apt-get install libjpeg62-turbo-dev -y
-	else
-		apt-get install libjpeg-turbo8-dev language-pack-ja language-pack-zh* language-pack-ko -y
+        else 
+	        if [ "$OS" = "UBUNTU" ] ; then
+	                apt-get install libjpeg-turbo8-dev language-pack-ja language-pack-zh* language-pack-ko -y
+		fi
 	fi
+        # 安装Tomcat
+	install_tomcat9
 	wget $GUACAMOLE_DOWNLOAD_LINK
 	tar zxf guacamole-server-${GUACAMOLE_VERSION}.tar.gz
 	rm -f guacamole-server-${GUACAMOLE_VERSION}.tar.gz
@@ -388,7 +398,7 @@ function install_guacamole_centos
 	fi
 }
 
-function install_tomcat9_centos
+function install_tomcat9
 {
 	curl -s $TOMCAT_URL | tar -xz
 	mv $TOMCAT_FILENAME /etc/tomcat9
