@@ -817,36 +817,6 @@ function install_reverse_proxy
 	fi
                 systemctl stop caddy
 		say @B"Caddy安装成功！" green
-	
-
-
-
-$guacamole_hostname {
-    reverse_proxy localhost:8080/guacamole/
-    
-}
-
-END
-	systemctl reload nginx
-	if [ "x$confirm_letsencrypt" = "xY" ] || [ "x$confirm_letsencrypt" = "xy" ] ; then
-		cat >> /etc/caddy/Caddyfile <<END
-{
-    log caddy_log {
-        output {
-	       file /etc/caddy/caddy.log
-		}
-  }
-
-	# TLS options
-    email $le_email
-	
-}
-$guacamole_hostname {
-    reverse_proxy localhost:8080/guacamole
-    
-}
-END
-
 		echo 
 		if [ -f /var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$guacamole_hostname/$guacamole_hostname.crt ] ; then
 			say @B"恭喜！Let's Encrypt SSL证书安装成功！" green
