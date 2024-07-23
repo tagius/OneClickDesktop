@@ -297,6 +297,8 @@ function install_guacamole_ubuntu_debian
 	                apt-get install libjpeg-turbo8-dev language-pack-ja language-pack-zh* language-pack-ko -y
 		fi
 	fi
+        # 安装jdk
+	apt-get install openjdk-17-jdk -y
         # 安装Tomcat
 	install_tomcat9
 	wget $GUACAMOLE_DOWNLOAD_LINK
