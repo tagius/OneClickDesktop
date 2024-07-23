@@ -575,7 +575,7 @@ function install_vnc
 	echo "请按回车键继续。"
 	read catch_all
 	echo 
-	if [ "$OS" = "DEBIAN10" ] ; then
+	if [ "$OS" = "DEBIAN" ] ; then
 		apt-get install xfce4 xfce4-goodies firefox-esr tigervnc-standalone-server tigervnc-common -y
 	else 
 		apt-get install xfce4 xfce4-goodies firefox tigervnc-standalone-server tigervnc-common -y
